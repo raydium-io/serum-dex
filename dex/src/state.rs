@@ -485,7 +485,7 @@ impl MarketState {
         Ok(Queue { header, buf })
     }
 
-    fn load_event_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<EventQueue<'a>> {
+    pub fn load_event_queue_mut<'a>(&self, queue: &'a AccountInfo) -> DexResult<EventQueue<'a>> {
         check_assert_eq!(&queue.key.to_aligned_bytes(), &identity(self.event_q))
             .map_err(|_| DexErrorCode::WrongEventQueueAccount)?;
         let (header, buf) = strip_header::<EventQueueHeader, Event>(queue, false)?;
@@ -1348,8 +1348,8 @@ impl EventView {
 
 #[derive(Copy, Clone)]
 #[repr(packed)]
-struct OrderBookStateHeader {
-    account_flags: u64, // Initialized, (Bids or Asks)
+pub struct OrderBookStateHeader {
+    pub account_flags: u64, // Initialized, (Bids or Asks)
 }
 unsafe impl Zeroable for OrderBookStateHeader {}
 unsafe impl Pod for OrderBookStateHeader {}

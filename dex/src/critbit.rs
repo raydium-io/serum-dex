@@ -28,11 +28,11 @@ enum NodeTag {
 #[derive(Copy, Clone)]
 #[repr(packed)]
 #[allow(dead_code)]
-struct InnerNode {
+pub struct InnerNode {
     tag: u32,
     prefix_len: u32,
     key: u128,
-    children: [u32; 2],
+    pub children: [u32; 2],
     _padding: [u64; 5],
 }
 unsafe impl Zeroable for InnerNode {}
@@ -168,7 +168,7 @@ pub struct AnyNode {
 unsafe impl Zeroable for AnyNode {}
 unsafe impl Pod for AnyNode {}
 
-enum NodeRef<'a> {
+pub enum NodeRef<'a> {
     Inner(&'a InnerNode),
     Leaf(&'a LeafNode),
 }
@@ -186,7 +186,7 @@ impl AnyNode {
         }
     }
 
-    #[cfg(test)]
+    // #[cfg(test)]
     fn prefix_len(&self) -> u32 {
         match self.case().unwrap() {
             NodeRef::Inner(&InnerNode { prefix_len, .. }) => prefix_len,
@@ -201,7 +201,7 @@ impl AnyNode {
         }
     }
 
-    fn case(&self) -> Option<NodeRef> {
+    pub fn case(&self) -> Option<NodeRef> {
         match NodeTag::try_from(self.tag) {
             Ok(NodeTag::InnerNode) => Some(NodeRef::Inner(cast_ref(self))),
             Ok(NodeTag::LeafNode) => Some(NodeRef::Leaf(cast_ref(self))),
@@ -252,13 +252,13 @@ const_assert_eq!(_NODE_ALIGN, align_of::<AnyNode>());
 
 #[derive(Copy, Clone)]
 #[repr(packed)]
-struct SlabHeader {
+pub struct SlabHeader {
     bump_index: u64,
     free_list_len: u64,
     free_list_head: u32,
 
     root_node: u32,
-    leaf_count: u64,
+    pub leaf_count: u64,
 }
 unsafe impl Zeroable for SlabHeader {}
 unsafe impl Pod for SlabHeader {}
@@ -347,7 +347,7 @@ impl Slab {
         (header, nodes)
     }
 
-    fn header(&self) -> &SlabHeader {
+    pub fn header(&self) -> &SlabHeader {
         self.parts().0
     }
 
@@ -492,7 +492,7 @@ pub enum SlabTreeError {
 }
 
 impl Slab {
-    fn root(&self) -> Option<NodeHandle> {
+    pub fn root(&self) -> Option<NodeHandle> {
         if self.header().leaf_count == 0 {
             return None;
         }
@@ -599,8 +599,8 @@ impl Slab {
         }
     }
 
-    #[cfg(test)]
-    fn find_by_key(&self, search_key: u128) -> Option<NodeHandle> {
+    // #[cfg(test)]
+    pub fn find_by_key(&self, search_key: u128) -> Option<NodeHandle> {
         let mut node_handle: NodeHandle = self.root()?;
         loop {
             let node_ref = self.get(node_handle).unwrap();
@@ -622,7 +622,7 @@ impl Slab {
         }
     }
 
-    pub(crate) fn find_by<F: Fn(&LeafNode) -> bool>(
+    pub fn find_by<F: Fn(&LeafNode) -> bool>(
         &self,
         limit: &mut u16,
         predicate: F,
